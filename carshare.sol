@@ -6,13 +6,13 @@ pragma solidity ^0.4.17;
 contract Journey {
     
     address public driver;
-    address public moderator;
     uint public tripCost;
     string public driveFrom;
     string public driveTo;
     uint public numberPassengers;
     mapping(address => bool) public passengers;
     uint public passengerCount;
+    bool public journeyCancelled;
     
 
     modifier onlyPassenger () {
@@ -25,12 +25,8 @@ contract Journey {
         _;
     }
     
-    modifier onlyModerator () {
-        require(msg.sender == moderator);
-        _;
-    }
-    
-    function Journey(uint cost,string locationfrom,string locationto, uint numberpassengers,address choosemoderator) public {
+
+    function Journey(uint cost,string locationfrom,string locationto, uint numberpassengers) public {
         
         driver = msg.sender;
         driveFrom = locationfrom;
@@ -38,7 +34,7 @@ contract Journey {
         tripCost = cost;
         numberPassengers = numberpassengers;
         passengerCount = 0;
-        moderator = choosemoderator;
+        journeyCancelled = false;
         
     }
     
@@ -66,12 +62,15 @@ contract Journey {
         driver.transfer(address(this).balance);
     }
     
-    //moderator can choose whether the journey was completed succesfully or not.
-    //and therefore who receives money
-    //function resolveDispute() public onlyModerator (address) {
-        
-        
-        
-    //}
+    //If driver cancels must payback money to passengers.
+    function driverCancelJourney() public onlyDriver {
+        journeyCancelled = true;
+    }
+    
+    function passengerRefund() onlyPassenger public {
+        require(journeyCancelled);
+        msg.sender.transfer(tripCost);
+    
+    }
         
 }
